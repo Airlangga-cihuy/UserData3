@@ -1,0 +1,28 @@
+#!/bin/bash
+set -euxo pipefail
+
+# Update minimal
+apt-get update -y
+
+# Install dependencies for CodeDeploy
+apt-get install -y ruby-full wget
+
+# Ambil region otomatis (IMDSv2)
+TOKEN=$(curl -sS -X PUT "http://169.254.169.254/latest/api/token" \
+  -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+
+AZ=$(curl -sS -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/meta-data/placement/availability-zone)
+
+REGION=${AZ::-1}
+
+# Download CodeDeploy agent installer
+cd /tmp
+wget https://aws-codedeploy-${REGION}.s3.${REGION}.amazonaws.com/latest/install
+chmod +x ./install
+./install auto
+
+systemctl enable codedeploy-agent
+systemctl start codedeploy-agent
+
+mkdir -p /var/www/html
