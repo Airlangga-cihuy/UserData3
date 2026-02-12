@@ -1,0 +1,21 @@
+#!/bin/bash
+set -euxo pipefail
+
+# Update minimal
+dnf -y update
+
+# Install ruby (dibutuhkan CodeDeploy agent)
+dnf -y install ruby wget
+
+# Download & install CodeDeploy agent (us-east-1)
+cd /tmp
+wget https://aws-codedeploy-us-east-1.s3.us-east-1.amazonaws.com/latest/install
+chmod +x ./install
+./install auto
+
+# Enable & start agent
+systemctl enable codedeploy-agent
+systemctl start codedeploy-agent
+
+# Create target directory early (optional but safe)
+mkdir -p /var/www/html
